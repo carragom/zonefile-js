@@ -1,0 +1,198 @@
+; Edge Cases Test Zone
+; Testing unusual but valid DNS zone file formats
+$ORIGIN edge-cases.test.
+$TTL 7200
+
+; ============================================================
+; Basic SOA with various formatting
+; ============================================================
+@ IN SOA ns.edge-cases.test. admin.edge-cases.test. (
+    2025111001 ; serial
+    3600       ; refresh
+    1800       ; retry
+    604800     ; expire
+    86400 )    ; minimum
+
+@ IN NS ns1.edge-cases.test.
+@ IN NS ns2.edge-cases.test.
+
+; ============================================================
+; Long domain names (close to 253 character limit)
+; ============================================================
+very.long.subdomain.name.that.tests.the.parsers.ability.to.handle.extremely.long.domain.names IN A 192.0.2.10
+this-is-another-very-long-subdomain-with-dashes-that-approaches-label-limits-carefully IN A 192.0.2.11
+
+; ============================================================
+; Domain names with numbers at the start
+; ============================================================
+1stserver   IN  A   192.0.2.20
+2ndserver   IN  A   192.0.2.21
+99problems  IN  A   192.0.2.22
+
+; ============================================================
+; Underscore in domain names (valid for SRV and special records)
+; ============================================================
+_service._tcp.host  IN  SRV  10 5 8080 backend.edge-cases.test.
+_dmarc              IN  TXT  "v=DMARC1; p=quarantine"
+
+; ============================================================
+; @ symbol for zone origin
+; ============================================================
+@       IN  A       192.0.2.1
+@       IN  AAAA    2001:db8::1
+@       IN  MX      10 mail
+
+; ============================================================
+; Empty domain (continuation from previous)
+; ============================================================
+cont1   IN  A       192.0.2.30
+        IN  AAAA    2001:db8::30
+        IN  TXT     "same host multiple records"
+
+; ============================================================
+; Various IPv6 formats
+; ============================================================
+ipv6-1  IN  AAAA    2001:db8:0:0:0:0:0:1
+ipv6-2  IN  AAAA    2001:db8::1
+ipv6-3  IN  AAAA    2001:0db8:0000:0000:0001:0000:0000:0001
+ipv6-4  IN  AAAA    ::1
+ipv6-5  IN  AAAA    fe80::1
+ipv6-6  IN  AAAA    2001:db8:85a3::8a2e:370:7334
+
+; ============================================================
+; TXT records with special characters
+; ============================================================
+txt1    IN  TXT     "simple text"
+txt2    IN  TXT     "text with spaces and punctuation!"
+txt3    IN  TXT     "v=spf1 include:_spf.example.com ~all"
+txt4    IN  TXT     "special=chars;semicolon:colon,comma|pipe&ampersand"
+
+; ============================================================
+; Multiple records same name (round-robin DNS)
+; ============================================================
+roundrobin  IN  A   192.0.2.100
+roundrobin  IN  A   192.0.2.101
+roundrobin  IN  A   192.0.2.102
+roundrobin  IN  A   192.0.2.103
+roundrobin  IN  A   192.0.2.104
+
+; ============================================================
+; Mixed TTL values on different records
+; ============================================================
+short       30      IN  A       192.0.2.110
+medium      300     IN  A       192.0.2.111
+long        86400   IN  A       192.0.2.112
+verylong    604800  IN  A       192.0.2.113
+
+; ============================================================
+; Wildcard records
+; ============================================================
+*.wildcard  IN  A       192.0.2.200
+*.wildcard  IN  AAAA    2001:db8::200
+
+; ============================================================
+; CNAME chains (though not recommended, they're valid)
+; ============================================================
+alias1      IN  CNAME   alias2
+alias2      IN  CNAME   real-host
+real-host   IN  A       192.0.2.210
+
+; ============================================================
+; Relative and absolute domain names mixed
+; ============================================================
+relative    IN  CNAME   target
+absolute    IN  CNAME   target.edge-cases.test.
+external    IN  CNAME   www.example.com.
+
+; ============================================================
+; MX with priority 0
+; ============================================================
+nullmx      IN  MX      0   .
+
+; ============================================================
+; Large priority numbers
+; ============================================================
+@           IN  MX      65535   mail.edge-cases.test.
+
+; ============================================================
+; SRV with various priority/weight/port combinations
+; ============================================================
+_http._tcp  IN  SRV     0   0   80      www
+_https._tcp IN  SRV     0   5   443     www
+_custom._tcp IN SRV     10  50  9999    service.edge-cases.test.
+
+; ============================================================
+; CAA with empty value (valid for issuewild denial)
+; ============================================================
+secure      IN  CAA     0   "issue"     "ca.example.com"
+secure      IN  CAA     0   "issuewild" ";"
+
+; ============================================================
+; DNSSEC records with long keys
+; ============================================================
+dnssec-test IN  DNSKEY  257 3 8 AwEAAagAIKlVZrpC6Ia7gEzahOR+9W29euxhJhVVLOyQbSEW0O8gcCjFFmQleRQ9Mx0soj0CQZjqIdmNYdqHOgqXYBg0dhDH
+
+; ============================================================
+; DS records with different digest types
+; ============================================================
+child1      IN  DS      12345 8 1 A94A8FE5CCB19BA61C4C0873D391E987982FBBD3
+child2      IN  DS      12345 8 2 A94A8FE5CCB19BA61C4C0873D391E987982FBBD3A94A8FE5CCB19BA61C4C0873
+
+; ============================================================
+; RRSIG with various type covered
+; ============================================================
+signed      IN  RRSIG   A 8 3 3600 20251231120000 20251201120000 54321 edge-cases.test. FAKESIGNATUREFORSIG
+
+; ============================================================
+; NSEC with many record types
+; ============================================================
+@           IN  NSEC    a.edge-cases.test. A NS SOA MX AAAA TXT RRSIG NSEC DNSKEY DS CAA
+
+; ============================================================
+; NAPTR with special regexp patterns
+; ============================================================
+enum        IN  NAPTR   10 100 "u" "E2U+sip" "!^.*$!sip:info@edge-cases.test!" .
+enum        IN  NAPTR   10 101 "u" "E2U+email" "!^(.*)$!mailto:\\1@edge-cases.test!" .
+
+; ============================================================
+; LOC with various precision values
+; ============================================================
+loc1        IN  LOC     42 21 54 N 71 06 18 W -24m 30m 100m 10m
+loc2        IN  LOC     52 14 05 N 00 08 50 E 10m 1m 10000m 10m
+loc3        IN  LOC     90 0 0 N 180 0 0 E 0m 0m 0m 0m
+
+; ============================================================
+; HINFO with various systems
+; ============================================================
+old-system  IN  HINFO   "PDP-11" "UNIX"
+modern      IN  HINFO   "AMD64" "Linux"
+mobile      IN  HINFO   "ARM-Cortex-A76" "Android"
+
+; ============================================================
+; SSHFP with different algorithms
+; ============================================================
+sshhost     IN  SSHFP   1   1   0123456789ABCDEF0123456789ABCDEF01234567
+sshhost     IN  SSHFP   2   1   FEDCBA9876543210FEDCBA9876543210FEDCBA98
+sshhost     IN  SSHFP   3   2   0011223344556677889900AABBCCDDEEFF00112233445566778899AABBCCDDEEFF
+sshhost     IN  SSHFP   4   2   FFEEDDCCBBAA99887766554433221100FFEEDDCCBBAA99887766554433221100
+
+; ============================================================
+; TLSA with different usage scenarios
+; ============================================================
+_443._tcp.secure    IN  TLSA    0   0   1   0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF
+_443._tcp.secure    IN  TLSA    1   0   1   FEDCBA9876543210FEDCBA9876543210FEDCBA9876543210FEDCBA9876543210
+_443._tcp.secure    IN  TLSA    2   1   1   ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789
+_443._tcp.secure    IN  TLSA    3   1   2   0102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F20
+
+; ============================================================
+; DNAME for whole subtree delegation
+; ============================================================
+old-department  IN  DNAME   new-department.example.com.
+deprecated      IN  DNAME   current.edge-cases.test.
+
+; ============================================================
+; SPF records (deprecated but still used)
+; ============================================================
+spftest     IN  SPF     "v=spf1 a mx ip4:192.0.2.0/24 ip6:2001:db8::/32 -all"
+
+; End of edge cases zone

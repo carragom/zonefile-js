@@ -1,0 +1,167 @@
+; Comprehensive test zone with all 21 supported record types
+; This zone file tests every record type supported by the parser
+$ORIGIN comprehensive.test.
+$TTL 3600
+
+; ============================================================
+; SOA Record - Start of Authority
+; ============================================================
+@   IN  SOA     ns1.comprehensive.test. admin.comprehensive.test. (
+                2025111001  ; Serial
+                7200        ; Refresh (2 hours)
+                3600        ; Retry (1 hour)
+                1209600     ; Expire (2 weeks)
+                86400 )     ; Minimum TTL (1 day)
+
+; ============================================================
+; NS Records - Name Servers
+; ============================================================
+@           IN  NS      ns1.comprehensive.test.
+@           IN  NS      ns2.comprehensive.test.
+@           IN  NS      ns3.example.com.
+
+; ============================================================
+; A Records - IPv4 Addresses
+; ============================================================
+@           IN  A       192.0.2.1
+ns1         IN  A       192.0.2.10
+ns2         IN  A       192.0.2.11
+www         IN  A       192.0.2.20
+mail        IN  A       192.0.2.30
+ftp         IN  A       192.0.2.40
+
+; ============================================================
+; AAAA Records - IPv6 Addresses
+; ============================================================
+@           IN  AAAA    2001:db8::1
+ns1         IN  AAAA    2001:db8::10
+ns2         IN  AAAA    2001:db8::11
+www         IN  AAAA    2001:db8::20
+mail        IN  AAAA    2001:db8::30
+ipv6only    IN  AAAA    2001:db8:abcd:1234:5678:90ab:cdef:1234
+
+; ============================================================
+; CNAME Records - Canonical Names (Aliases)
+; ============================================================
+www2        IN  CNAME   www
+webmail     IN  CNAME   mail
+blog        IN  CNAME   www.comprehensive.test.
+www3        IN  CNAME   www2
+
+; ============================================================
+; MX Records - Mail Exchangers
+; ============================================================
+@           IN  MX      10  mail.comprehensive.test.
+@           IN  MX      20  mail2.comprehensive.test.
+@           IN  MX      30  backup-mx.example.com.
+
+; ============================================================
+; PTR Records - Pointer for Reverse DNS
+; ============================================================
+; Note: These would normally be in reverse zone files
+10          IN  PTR     ns1.comprehensive.test.
+11          IN  PTR     ns2.comprehensive.test.
+
+; ============================================================
+; TXT Records - Text Records
+; ============================================================
+@           IN  TXT     "v=spf1 mx a ip4:192.0.2.0/24 -all"
+@           IN  TXT     "google-site-verification=abcdefgh1234567890"
+_dmarc      IN  TXT     "v=DMARC1; p=reject; rua=mailto:dmarc@comprehensive.test"
+multiline   IN  TXT     "this is a test record with various characters: !@#$%"
+
+; ============================================================
+; SRV Records - Service Records
+; ============================================================
+_xmpp-server._tcp   IN  SRV     5   0   5269    xmpp.comprehensive.test.
+_xmpp-client._tcp   IN  SRV     10  5   5222    xmpp.comprehensive.test.
+_sip._tcp           IN  SRV     10  60  5060    sip.comprehensive.test.
+_sip._udp           IN  SRV     10  60  5060    sip.comprehensive.test.
+_ldap._tcp          IN  SRV     0   0   389     ldap.comprehensive.test.
+
+; ============================================================
+; CAA Records - Certification Authority Authorization
+; ============================================================
+@           IN  CAA     0   "issue"         "letsencrypt.org"
+@           IN  CAA     0   "issuewild"     "letsencrypt.org"
+@           IN  CAA     0   "iodef"         "mailto:security@comprehensive.test"
+
+; ============================================================
+; DNSSEC Records
+; ============================================================
+
+; DNSKEY - DNS Public Keys
+@           IN  DNSKEY  256 3 8 AwEAAagAIKlVZrpC6Ia7gEzahOR+9W29euxhJhVVLOyQbSEW0O8gcCjFFmQleRQ9
+@           IN  DNSKEY  257 3 8 AwEAAaz/tAm8yTn4Mfeh5eyI96WSVexTBAvkMgJzkKTOiW1vkIbzxeF3MiYDKLfY
+
+; DS - Delegation Signer
+subdomain   IN  DS      12345 8 2 1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF
+subdomain   IN  DS      12345 8 1 1234567890ABCDEF1234567890ABCDEF12345678
+
+; RRSIG - Resource Record Signature
+@           IN  RRSIG   A 8 2 3600 20251215000000 20251110000000 12345 comprehensive.test. kRCOH6u7l0QGy9qpC9l1sLncJcOKFLJ7GhiUOibu4teYp5VE9RncGYHT
+
+; NSEC - Next Secure Record
+@           IN  NSEC    mail.comprehensive.test. A NS SOA MX AAAA RRSIG NSEC DNSKEY
+mail        IN  NSEC    ns1.comprehensive.test. A AAAA MX RRSIG NSEC
+
+; ============================================================
+; Extended Record Types
+; ============================================================
+
+; TLSA - TLS Authentication
+_443._tcp.www   IN  TLSA    3 1 1 0C72AC70B745AC19998811B131D662C9AC69DBDBE7CB23E5B514B56664C5D3D6
+_443._tcp.mail  IN  TLSA    3 0 1 A1B2C3D4E5F6789012345678901234567890ABCDEFABCDEF1234567890ABCD
+_25._tcp.mail   IN  TLSA    3 1 2 FEDCBA9876543210FEDCBA9876543210FEDCBA9876543210FEDCBA9876543210
+
+; SSHFP - SSH Fingerprint
+ssh         IN  SSHFP   1 1 123456789ABCDEF67890123456789ABCDEF67890
+ssh         IN  SSHFP   2 1 FEDCBA9876543210FEDCBA9876543210FEDCBA98
+ssh         IN  SSHFP   4 2 A1B2C3D4E5F67890A1B2C3D4E5F67890A1B2C3D4E5F67890A1B2C3D4E5F67890
+
+; DNAME - Delegation Name (subtree aliasing)
+oldsite     IN  DNAME   newsite.example.com.
+legacy      IN  DNAME   modern.comprehensive.test.
+
+; NAPTR - Naming Authority Pointer
+@           IN  NAPTR   100 10 "u" "E2U+sip" "!^.*$!sip:info@comprehensive.test!" .
+@           IN  NAPTR   100 20 "u" "E2U+email" "!^.*$!mailto:info@comprehensive.test!" .
+@           IN  NAPTR   200 10 "s" "http+N2L+N2C+N2R" "" www.comprehensive.test.
+
+; LOC - Location Information
+@           IN  LOC     37 46 30.000 N 122 25 30.000 W 10.00m 10m 100m 10m
+datacenter  IN  LOC     51 30 12.748 N 0 7 39.611 W 0.00m 0.00m 0.00m 0.00m
+office      IN  LOC     40 42 46 N 74 0 21 W 10m 10m 10m 2m
+
+; HINFO - Host Information
+server1     IN  HINFO   "x86_64" "Linux"
+server2     IN  HINFO   "ARM64" "FreeBSD"
+mainframe   IN  HINFO   "IBM-MAINFRAME" "MVS"
+
+; SPF - Sender Policy Framework
+@           IN  SPF     "v=spf1 mx a ip4:192.0.2.0/24 -all"
+mail        IN  SPF     "v=spf1 a -all"
+_spf        IN  SPF     "v=spf1 include:_spf.google.com ~all"
+
+; ============================================================
+; Additional test cases for proper formatting
+; ============================================================
+
+; Mixed TTL values
+short-ttl   60      IN  A       192.0.2.100
+long-ttl    86400   IN  A       192.0.2.101
+
+; Subdomain records
+sub.domain  IN  A       192.0.2.200
+sub.domain  IN  AAAA    2001:db8::200
+
+; Wildcard record
+*.wildcard  IN  A       192.0.2.250
+
+; Multiple records for same name (round-robin)
+loadbalancer    IN  A   192.0.2.51
+loadbalancer    IN  A   192.0.2.52
+loadbalancer    IN  A   192.0.2.53
+loadbalancer    IN  A   192.0.2.54
+
+; End of zone file

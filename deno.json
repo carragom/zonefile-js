@@ -1,0 +1,47 @@
+{
+	"name": "@carragom/zonefile-js",
+	"version": "0.0.1-alpha.1",
+	"exports": {
+		".": "./mod.ts"
+	},
+	"license": "MIT",
+	"lock": false,
+	"exclude": [
+		"_internal/parser.js"
+	],
+	"bench": {
+		"permissions": {
+			"read": true
+		}
+	},
+	"test": {
+		"permissions": {
+			"read": true,
+			"write": true
+		}
+	},
+	"fmt": {
+		"useTabs": true,
+		"indentWidth": 3,
+		"singleQuote": true,
+		"semiColons": false
+	},
+	"publish": {
+		"exclude": [
+			"!_internal/parser.js"
+		]
+	},
+	"tasks": {
+		"generate:parser": {
+			"command": "deno run -RWE npm:peggy@5 --format es -o _internal/parser.js _internal/parser.peggy",
+			"description": "Generates the parser from the Peggy grammar file"
+		},
+		"test:coverage": {
+			"command": "deno test -P --coverage --clean",
+			"description": "Runs tests with coverage collection"
+		}
+	},
+	"imports": {
+		"@std/assert": "jsr:@std/assert@1"
+	}
+}

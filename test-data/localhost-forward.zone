@@ -1,0 +1,11 @@
+$ORIGIN localhost.
+$TTL 86400
+@	IN	SOA	@ root.localhost. (
+			1	; Serial
+			604800	; Refresh
+			86400	; Retry
+			2419200	; Expire
+			86400 )	; Negative Cache TTL
+	IN	NS	@
+	IN	A	127.0.0.1
+	IN	AAAA	::1
