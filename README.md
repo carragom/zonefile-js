@@ -3,7 +3,7 @@
 An [RFC 1035](https://datatracker.ietf.org/doc/html/rfc1035) zone file
 serializer and parser using [Peggy](https://peggyjs.org/)
 
-**[📚 Full Documentation & API Reference on JSR →](https://jsr.io/@carragom/zonefile-js)**
+**[📚 Full Documentation & API Reference on JSR →](https://jsr.io/@carragom/zonefile-js/doc)**
 
 ## Features
 
