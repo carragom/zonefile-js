@@ -15,7 +15,6 @@ import {
 	type NSData,
 	type NSECData,
 	parseZone,
-	parseZoneFile,
 	type PTRData,
 	type Record,
 	type RRSIGData,
@@ -25,13 +24,11 @@ import {
 	type SSHFPData,
 	type TLSAData,
 	type TXTData,
-	type ZoneEntry,
 	type ZONEMDData,
 } from './mod.ts'
 import {
 	serializeEntry,
 	serializeZone,
-	serializeZoneFile,
 } from './serialize.ts'
 
 Deno.test('parseZone - basic SOA, NS, A records', () => {
@@ -267,8 +264,8 @@ Deno.test('parseZone - domain names starting with numbers', () => {
 	assertEquals((rec.data as PTRData).ptrdname, 'localhost.')
 })
 
-Deno.test('parseZoneFile - load from test file', async () => {
-	const result = await parseZoneFile('test-data/example.zone')
+Deno.test('parseZone - example.zone structure and SOA serial', async () => {
+	const result = parseZone(await Deno.readTextFile('test-data/example.zone'))
 
 	assertEquals(result.length, 17)
 	assertEquals(result[0].type, 'directive')
@@ -282,8 +279,8 @@ Deno.test('parseZoneFile - load from test file', async () => {
 	assertEquals((soaRecord?.data as SOAData).serial, 2020091025)
 })
 
-Deno.test('parseZoneFile - localhost forward zone', async () => {
-	const result = await parseZoneFile('test-data/localhost-forward.zone')
+Deno.test('parseZone - localhost forward zone', async () => {
+	const result = parseZone(await Deno.readTextFile('test-data/localhost-forward.zone'))
 
 	assertEquals(result.length, 6)
 
@@ -303,8 +300,8 @@ Deno.test('parseZoneFile - localhost forward zone', async () => {
 	assertEquals((aaaaRecord?.data as AAAAData).ip, '::1')
 })
 
-Deno.test('parseZoneFile - localhost reverse zone', async () => {
-	const result = await parseZoneFile('test-data/localhost-reverse.zone')
+Deno.test('parseZone - localhost reverse zone', async () => {
+	const result = parseZone(await Deno.readTextFile('test-data/localhost-reverse.zone'))
 
 	assertEquals(result.length, 5)
 
@@ -1271,35 +1268,6 @@ ftp.    IN  CNAME ftp.other.com.
 	assertEquals(records[3].ttl, 86400)
 })
 
-Deno.test('parseZone - options work with parseZoneFile', async () => {
-	const zone = `
-$ORIGIN example.com.
-$TTL 86400
-@       IN  SOA ns1.example.com. admin.example.com. (
-                2023100101 7200 3600 1209600 3600 )
-www     IN  A   192.0.2.1
-`
-
-	// Write test zone to temp file
-	const tempFile = await Deno.makeTempFile({ suffix: '.zone' })
-	await Deno.writeTextFile(tempFile, zone)
-
-	try {
-		const result = await parseZoneFile(tempFile, {
-			expandDomains: true,
-			inheritTTL: true,
-		})
-
-		const records = result.filter((r) => r.type === 'record') as Record[]
-		assertEquals(records[0].domain, 'example.com.')
-		assertEquals(records[0].ttl, 86400)
-		assertEquals(records[1].domain, 'www.example.com.')
-		assertEquals(records[1].ttl, 86400)
-	} finally {
-		await Deno.remove(tempFile)
-	}
-})
-
 // =============================================================================
 // Error Handling Tests
 // =============================================================================
@@ -1407,16 +1375,6 @@ Deno.test('parseZone - SOA missing required fields', () => {
 	}
 })
 
-Deno.test('parseZoneFile - non-existent file', async () => {
-	try {
-		await parseZoneFile('/non/existent/file/that/does/not/exist.zone')
-		throw new Error('Expected parseZoneFile to throw')
-	} catch (error) {
-		// Should throw file not found error
-		assertEquals(error instanceof Error, true)
-	}
-})
-
 Deno.test('parseZone - MX record with invalid priority (non-numeric)', () => {
 	const zoneContent = `example.com. IN MX abc mail.example.com.
 `
@@ -1487,8 +1445,8 @@ Deno.test('parseZone - CAA record with invalid flags', () => {
 // Integration Tests - Zone Files
 // =============================================================================
 
-Deno.test('parseZoneFile - localhost-forward.zone', async () => {
-	const result = await parseZoneFile('test-data/localhost-forward.zone')
+Deno.test('parseZone - localhost-forward.zone', async () => {
+	const result = parseZone(await Deno.readTextFile('test-data/localhost-forward.zone'))
 	assertEquals(result.length, 6) // 2 directives + 4 records
 
 	const records = result.filter((r) => r.type === 'record') as Record[]
@@ -1502,8 +1460,8 @@ Deno.test('parseZoneFile - localhost-forward.zone', async () => {
 	assertEquals(recordTypes.includes('AAAA'), true)
 })
 
-Deno.test('parseZoneFile - localhost-reverse.zone', async () => {
-	const result = await parseZoneFile('test-data/localhost-reverse.zone')
+Deno.test('parseZone - localhost-reverse.zone', async () => {
+	const result = parseZone(await Deno.readTextFile('test-data/localhost-reverse.zone'))
 	assertEquals(result.length, 5) // 2 directives + 3 records
 
 	const records = result.filter((r) => r.type === 'record') as Record[]
@@ -1513,16 +1471,16 @@ Deno.test('parseZoneFile - localhost-reverse.zone', async () => {
 	assertEquals(recordTypes.includes('PTR'), true)
 })
 
-Deno.test('parseZoneFile - example.zone', async () => {
-	const result = await parseZoneFile('test-data/example.zone')
+Deno.test('parseZone - example.zone', async () => {
+	const result = parseZone(await Deno.readTextFile('test-data/example.zone'))
 	assertEquals(result.length, 17) // 2 directives + 15 records
 
 	const records = result.filter((r) => r.type === 'record') as Record[]
 	assertEquals(records.length, 15)
 })
 
-Deno.test('parseZoneFile - comprehensive.zone (21 record types)', async () => {
-	const result = await parseZoneFile('test-data/comprehensive.zone')
+Deno.test('parseZone - comprehensive.zone (21 record types)', async () => {
+	const result = parseZone(await Deno.readTextFile('test-data/comprehensive.zone'))
 	assertEquals(result.length, 75) // 2 directives + 73 records
 
 	const records = result.filter((r) => r.type === 'record') as Record[]
@@ -1533,8 +1491,8 @@ Deno.test('parseZoneFile - comprehensive.zone (21 record types)', async () => {
 	assertEquals(recordTypes.size, 21)
 })
 
-Deno.test('parseZoneFile - edge-cases.zone (wildcards, numbers, etc)', async () => {
-	const result = await parseZoneFile('test-data/edge-cases.zone')
+Deno.test('parseZone - edge-cases.zone (wildcards, numbers, etc)', async () => {
+	const result = parseZone(await Deno.readTextFile('test-data/edge-cases.zone'))
 	assertEquals(result.length, 76) // 2 directives + 74 records
 
 	const records = result.filter((r) => r.type === 'record') as Record[]
@@ -1549,8 +1507,8 @@ Deno.test('parseZoneFile - edge-cases.zone (wildcards, numbers, etc)', async () 
 	)
 })
 
-Deno.test('parseZoneFile - root-sample.zone (IANA root zone)', async () => {
-	const result = await parseZoneFile('test-data/root-sample.zone')
+Deno.test('parseZone - root-sample.zone (IANA root zone)', async () => {
+	const result = parseZone(await Deno.readTextFile('test-data/root-sample.zone'))
 	assertEquals(result.length, 500) // All records, no directives
 
 	const records = result.filter((r) => r.type === 'record') as Record[]
@@ -1685,7 +1643,7 @@ www.example.com.  IN    CNAME   example.com.
 
 Deno.test('serializeZone - round-trip with example.zone', async () => {
 	// Parse the test file
-	const parsed = await parseZoneFile('test-data/example.zone')
+	const parsed = parseZone(await Deno.readTextFile('test-data/example.zone'))
 
 	// Serialize it back
 	const serialized = serializeZone(parsed, { includeBlankLines: false })
@@ -2119,260 +2077,4 @@ Deno.test('serializeEntry - ZONEMD record', () => {
 	)
 })
 
-// =============================================================================
-// serializeZoneFile Tests - File I/O
-// =============================================================================
 
-Deno.test('serializeZoneFile - write and read back simple zone', async () => {
-	const tempFile = './test-temp-zone.zone'
-
-	const entries: ZoneEntry[] = [
-		{
-			type: 'directive',
-			name: '$ORIGIN',
-			value: 'example.com.',
-		},
-		{
-			type: 'directive',
-			name: '$TTL',
-			value: 3600,
-		},
-		{
-			type: 'record',
-			recordType: 'SOA',
-			domain: 'example.com.',
-			ttl: null,
-			class: 'IN',
-			data: {
-				mname: 'ns.example.com.',
-				rname: 'admin.example.com.',
-				serial: 1,
-				refresh: 7200,
-				retry: 3600,
-				expire: 1209600,
-				minimum: 3600,
-			},
-		},
-		{
-			type: 'record',
-			recordType: 'A',
-			domain: 'example.com.',
-			ttl: 3600,
-			class: 'IN',
-			data: {
-				ip: '192.0.2.1',
-			},
-		},
-	]
-
-	try {
-		// Write zone file
-		await serializeZoneFile(tempFile, entries)
-
-		// Read it back
-		const readBack = await parseZoneFile(tempFile)
-
-		// Verify structure matches
-		assertEquals(readBack.length, entries.length)
-		assertEquals((readBack[0] as Directive).name, '$ORIGIN')
-		assertEquals((readBack[1] as Directive).name, '$TTL')
-		assertEquals((readBack[2] as Record).recordType, 'SOA')
-		assertEquals((readBack[3] as Record).recordType, 'A')
-	} finally {
-		// Clean up
-		try {
-			await Deno.remove(tempFile)
-		} catch {
-			// Ignore if file doesn't exist
-		}
-	}
-})
-
-Deno.test('serializeZoneFile - write zone with all record types', async () => {
-	const tempFile = './test-temp-comprehensive.zone'
-
-	const entries: ZoneEntry[] = [
-		{
-			type: 'directive',
-			name: '$ORIGIN',
-			value: 'test.com.',
-		},
-		{
-			type: 'record',
-			recordType: 'A',
-			domain: 'test.com.',
-			ttl: 3600,
-			class: 'IN',
-			data: { ip: '192.0.2.1' },
-		},
-		{
-			type: 'record',
-			recordType: 'AAAA',
-			domain: 'test.com.',
-			ttl: 3600,
-			class: 'IN',
-			data: { ip: '2001:db8::1' },
-		},
-		{
-			type: 'record',
-			recordType: 'MX',
-			domain: 'test.com.',
-			ttl: 3600,
-			class: 'IN',
-			data: { priority: 10, mx: 'mail.test.com.' },
-		},
-		{
-			type: 'record',
-			recordType: 'TXT',
-			domain: 'test.com.',
-			ttl: 3600,
-			class: 'IN',
-			data: { txt: 'v=spf1 mx -all' },
-		},
-	]
-
-	try {
-		// Write zone file
-		await serializeZoneFile(tempFile, entries)
-
-		// Read it back and parse
-		const readBack = await parseZoneFile(tempFile)
-
-		// Verify we have all entries
-		const records = readBack.filter((e) => e.type === 'record') as Record[]
-		assertEquals(records.length, 4)
-
-		// Verify record types
-		const recordTypes = records.map((r) => r.recordType).sort()
-		assertEquals(
-			JSON.stringify(recordTypes),
-			JSON.stringify(['A', 'AAAA', 'MX', 'TXT']),
-		)
-	} finally {
-		// Clean up
-		try {
-			await Deno.remove(tempFile)
-		} catch {
-			// Ignore
-		}
-	}
-})
-
-Deno.test('serializeZoneFile - round-trip with example.zone', async () => {
-	const tempFile = './test-temp-roundtrip.zone'
-
-	try {
-		// Parse existing test file
-		const original = await parseZoneFile('test-data/example.zone')
-
-		// Write to temp file
-		await serializeZoneFile(tempFile, original)
-
-		// Read back and parse
-		const readBack = await parseZoneFile(tempFile)
-
-		// Should have same number of entries
-		assertEquals(readBack.length, original.length)
-
-		// Should have same directives
-		const originalDirectives = original.filter((e) => e.type === 'directive')
-		const readBackDirectives = readBack.filter((e) => e.type === 'directive')
-		assertEquals(readBackDirectives.length, originalDirectives.length)
-
-		// Should have same records
-		const originalRecords = original.filter((e) =>
-			e.type === 'record'
-		) as Record[]
-		const readBackRecords = readBack.filter((e) =>
-			e.type === 'record'
-		) as Record[]
-		assertEquals(readBackRecords.length, originalRecords.length)
-	} finally {
-		// Clean up
-		try {
-			await Deno.remove(tempFile)
-		} catch {
-			// Ignore
-		}
-	}
-})
-
-Deno.test('serializeZoneFile - includeBlankLines option', async () => {
-	const tempFileWithBlanks = './test-temp-blanks.zone'
-	const tempFileNoBlanks = './test-temp-noblanks.zone'
-
-	const entries: ZoneEntry[] = [
-		{
-			type: 'record',
-			recordType: 'A',
-			domain: 'test.com.',
-			ttl: 3600,
-			class: 'IN',
-			data: { ip: '192.0.2.1' },
-		},
-		{
-			type: 'record',
-			recordType: 'MX',
-			domain: 'test.com.',
-			ttl: 3600,
-			class: 'IN',
-			data: { priority: 10, mx: 'mail.test.com.' },
-		},
-	]
-
-	try {
-		// Write with blank lines
-		await serializeZoneFile(tempFileWithBlanks, entries, {
-			includeBlankLines: true,
-		})
-		const withBlanks = await Deno.readTextFile(tempFileWithBlanks)
-
-		// Write without blank lines
-		await serializeZoneFile(tempFileNoBlanks, entries)
-		const noBlanks = await Deno.readTextFile(tempFileNoBlanks)
-
-		// File with blank lines should be longer
-		assertEquals(withBlanks.length > noBlanks.length, true)
-
-		// Both should parse to same entries
-		const parsedWithBlanks = await parseZoneFile(tempFileWithBlanks)
-		const parsedNoBlanks = await parseZoneFile(tempFileNoBlanks)
-		assertEquals(parsedWithBlanks.length, parsedNoBlanks.length)
-	} finally {
-		// Clean up
-		try {
-			await Deno.remove(tempFileWithBlanks)
-			await Deno.remove(tempFileNoBlanks)
-		} catch {
-			// Ignore
-		}
-	}
-})
-
-Deno.test('serializeZoneFile - write to subdirectory that exists', async () => {
-	// Using test-data directory which we know exists
-	const tempFile = './test-data/test-temp-subdir.zone'
-
-	const entries: ZoneEntry[] = [
-		{
-			type: 'directive',
-			name: '$ORIGIN',
-			value: 'example.com.',
-		},
-	]
-
-	try {
-		await serializeZoneFile(tempFile, entries)
-
-		// Verify file was created
-		const stat = await Deno.stat(tempFile)
-		assertEquals(stat.isFile, true)
-	} finally {
-		// Clean up
-		try {
-			await Deno.remove(tempFile)
-		} catch {
-			// Ignore
-		}
-	}
-})

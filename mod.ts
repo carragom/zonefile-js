@@ -672,40 +672,8 @@ export function parseZone(
 	return parser.parse(zoneFileContent, options)
 }
 
-/**
- * Parse a DNS zone file from a file path
- *
- * @param filePath - Path to the zone file
- * @param options - Optional parsing options
- * @returns Promise resolving to array of parsed zone entries
- *
- * @example
- * ```ts
- * import { parseZoneFile } from 'jsr:@carragom/zonefile-js'
- *
- * const entries = await parseZoneFile('./zones/example.com.zone', {
- *   expandDomains: true,
- *   inheritTTL: true
- * })
- *
- * for (const entry of entries) {
- *   if (entry.type === 'record' && entry.recordType === 'A') {
- *     console.log(`${entry.domain} -> ${entry.data.ip}`)
- *   }
- * }
- * ```
- */
-export async function parseZoneFile(
-	filePath: string,
-	options?: ParseOptions,
-): Promise<ZoneEntry[]> {
-	const content = await Deno.readTextFile(filePath)
-	return parseZone(content, options)
-}
-
 // Re-export serialization functions
 export {
 	serializeEntry,
 	serializeZone,
-	serializeZoneFile,
 } from './serialize.ts'
