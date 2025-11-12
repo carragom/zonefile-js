@@ -1,6 +1,3 @@
-// @deno-types="./_internal/parser.d.ts"
-import * as parser from './_internal/parser.js'
-
 /**
  * A DNS zone file parser and serializer for BIND-style zone files.
  * An {@link https://datatracker.ietf.org/doc/html/rfc1035 | RFC 1035} zone file
@@ -114,6 +111,9 @@ import * as parser from './_internal/parser.js'
  * ```
  * @module zf
  */
+
+// @deno-types="./_internal/parser.d.ts"
+import * as parser from './_internal/parser.js'
 
 /**
  * Represents a zone file directive ($ORIGIN or $TTL)
