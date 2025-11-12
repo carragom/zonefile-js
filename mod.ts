@@ -2,8 +2,9 @@
 import * as parser from './_internal/parser.js'
 
 /**
- * @module
  * A DNS zone file parser and serializer for BIND-style zone files.
+ * An {@link https://datatracker.ietf.org/doc/html/rfc1035 | RFC 1035} zone file
+ * serializer and parser using {@link https://peggyjs.org/ | Peggy}.
  *
  * Supports parsing and creating 21+ DNS record types including SOA, NS, A, AAAA,
  * MX, CNAME, TXT, SRV, CAA, and various DNSSEC record types.
@@ -111,6 +112,7 @@ import * as parser from './_internal/parser.js'
  * const zoneFile = serializeZone(entries, { includeBlankLines: true })
  * console.log(zoneFile)
  * ```
+ * @module zf
  */
 
 /**
