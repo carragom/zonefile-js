@@ -1,7 +1,9 @@
 {
 	"name": "@carragom/zonefile-js",
 	"version": "0.0.1-dev",
-	"exports": "./mod.ts",
+	"exports": {
+		".": "./mod.ts"
+	},
 	"license": "MIT",
 	"lock": false,
 	"exclude": [

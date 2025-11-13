@@ -1,6 +1,9 @@
 # code coverage
 coverage
 
+# code documentation
+doc
+
 # dotenv environment variable files
 .env.*
 !.env.example

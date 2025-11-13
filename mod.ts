@@ -1,5 +1,4 @@
 /**
- * A DNS zone file parser and serializer for BIND-style zone files.
  * An {@link https://datatracker.ietf.org/doc/html/rfc1035 | RFC 1035} zone file
  * serializer and parser using {@link https://peggyjs.org/ | Peggy}.
  *
@@ -10,7 +9,7 @@
  * ```ts
  * import { parseZone } from 'jsr:@carragom/zonefile-js'
  *
- * const zone = `
+ * const data = `
  * $ORIGIN example.com.
  * $TTL 86400
  * @       IN  SOA ns1.example.com. admin.example.com. (
@@ -19,7 +18,7 @@
  * www     IN  A   192.0.2.1
  * `
  *
- * const entries = parseZone(zone, {
+ * const entries = parseZone(data, {
  *   expandDomains: true,
  *   inheritTTL: true
  * })
@@ -106,8 +105,8 @@
  *   }
  * ]
  *
- * const zoneFile = serializeZone(entries, { includeBlankLines: true })
- * console.log(zoneFile)
+ * const data = serializeZone(entries, { includeBlankLines: true })
+ * console.log(data)
  * ```
  * @module zf
  */
@@ -618,7 +617,7 @@ export interface ParseOptions {
 /**
  * Parse a DNS zone file string into structured data
  *
- * @param zoneFileContent - The zone file content as a string
+ * @param data - The zone file content as a string
  * @param options - Optional parsing options
  * @returns Array of parsed zone entries (directives and records)
  *
@@ -666,10 +665,10 @@ export interface ParseOptions {
  * ```
  */
 export function parseZone(
-	zoneFileContent: string,
+	data: string,
 	options?: ParseOptions,
 ): ZoneEntry[] {
-	return parser.parse(zoneFileContent, options)
+	return parser.parse(data, options)
 }
 
 // Re-export serialization functions
